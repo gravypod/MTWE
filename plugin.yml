@@ -1,0 +1,8 @@
+name: MTWE
+main: com.gravypod.MTWE.MTWE
+version: 1.0
+author: [Gravypod, ElgarL]
+description: I can't tell you that info!
+commands: 
+  MTWE: 
+    aliases: []
