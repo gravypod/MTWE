@@ -1,20 +1,21 @@
 package com.gravypod.MTWE;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
+import org.bukkit.block.Block;
 
 public class ReplaceBlocks extends Thread {
 
 	MTWE plugin;
-	Player player;
+	volatile Location loc;
 	int item;
 	
-	public ReplaceBlocks(MTWE plugin, Player player, int item) {
+	public ReplaceBlocks(MTWE plugin, Location l, int item) {
 
 		this.plugin = plugin;
-		this.player = player;
+		this.loc = new Location(l.getWorld(), l.getX(), l.getY(), l.getZ());
 		this.item = item;
 
 	}
@@ -22,38 +23,42 @@ public class ReplaceBlocks extends Thread {
 	@Override
 	public void run() {
 		
-		setToStone(this.player);
+		setToBlock();
 		
 	}
 
-	public void setToStone(Player player) {
-
-		World world = player.getWorld();
-		int firstX, firstY, firstZ;
-		firstX = player.getLocation().getBlockX();
-		firstY = player.getLocation().getBlockY();
-		firstZ = player.getLocation().getBlockZ();
-		for (int offset = 1; offset < 100; offset++) {
-			Chunk chunk = world.getChunkAt(new Location(player.getWorld(), firstX + (offset * 16), firstY, firstZ));
+	public void setToBlock() {
+		final long time = System.nanoTime();
+		World world = loc.getWorld();
+		int firstX = loc.getBlockX();
+		int firstY = loc.getBlockY();
+		int firstZ = loc.getBlockZ();
+		synchronized (world) {
 			int maxHeight = world.getMaxHeight();
-			
-			for (int x = 0; x < 16; x++) {
-				for (int z = 0; z < 16; z++) {
-					for (int y = 0; y < maxHeight; y++) {
-						synchronized (chunk) {
-							if (!chunk.isLoaded()) {
-								chunk.load();
+			for (int offsetZ = 0; offsetZ < 1; offsetZ++)
+				for (int offsetX = 1; offsetX < 100; offsetX++) {
+					Chunk chunk = world.getChunkAt(new Location(world, firstX + (offsetX * 16), firstY, firstZ + (offsetZ * 16)));
+					synchronized (chunk) {
+						for (int x = 0; x < 16; x++) {
+							for (int z = 0; z < 16; z++) {
+								for (int y = 0; y < maxHeight; y++) {
+									if (!chunk.isLoaded()) {
+										chunk.load();
+									} 
+									while (!chunk.isLoaded()) {
+										
+									}
+									Block b = chunk.getBlock(x, y, z);
+									synchronized (b) {
+										b.setTypeId(item, false);
+									}
+								}
 							}
-							chunk.getBlock(x, y, z).setTypeId(item, false);
-
 						}
 					}
 				}
-			}
-			
-			world.refreshChunk(firstX + (offset * 16), firstY);
-		
 		}
+		System.out.println(ChatColor.AQUA + "[MTWE] " + ChatColor.WHITE + "Done, took " + (System.nanoTime() - time) + " Ms");
 	}
 
 }
