@@ -1,7 +1,7 @@
 name: MTWE
-main: com.gravypod.MTWE.MTWE
+main: com.gravypod.mtwe.WorldEditing
 version: 1.0
-author: [Gravypod, ElgarL]
+author: Gravypod
 description: I can't tell you that info!
 commands: 
   MTWE: 
